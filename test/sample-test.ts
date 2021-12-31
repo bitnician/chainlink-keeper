@@ -216,7 +216,7 @@ describe("Keeper", function () {
     });
   });
 
-  describe.only("#performUpkeep", () => {
+  describe("#performUpkeep", () => {
     it("should perform upkeep", async () => {
       // set role for keeper to be able to call seeder
       seeder.setTokenFeeSetterRole(tokenAddress, keeper.address);
