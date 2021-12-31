@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./chainlink/KeeperCompatible.sol";
 import "./PriceAggregator.sol";
 import "./Seeder.sol";
-import "hardhat/console.sol";
 
 // solhint-disable not-rely-on-time
 contract Keeper is
