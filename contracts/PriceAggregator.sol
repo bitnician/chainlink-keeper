@@ -22,6 +22,7 @@ contract PriceAggregator {
             uint256 timeStamp,
             uint80 answeredInRound
         ) = aggregatorV3.latestRoundData();
+
         return price;
     }
     // solhint-enable no-unused-vars
