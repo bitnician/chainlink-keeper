@@ -18,6 +18,8 @@ contract Keeper is
     using SafeMath for uint256;
 
     PriceAggregator public priceAggregator;
+    uint8 public priceDecimals; // decimlas corresponding to the priceAggregator, check https://docs.chain.link/docs/binance-smart-chain-addresses/ to see priceAggregator addresses and their decimals
+
     Seeder public seeder;
 
     uint16 public immutable divisor = 10000;
@@ -32,14 +34,16 @@ contract Keeper is
     uint256 public lastTimeStamp;
 
     constructor(
-        address _priceAggregator,
-        address _tokenAddress, // 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
-        uint8 _tokenDecimals, // 8
         address _seeder,
+        address _priceAggregator,
+        uint8 _priceDecimals,
+        address _tokenAddress, // 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+        uint8 _tokenDecimals,
         uint16 _threshold,
         uint16 _interval
     ) {
         require(_priceAggregator != address(0), "invalid aggregator address");
+        require(_priceDecimals > 0, "invalid price decimals");
         require(_tokenAddress != address(0), "invalid token address");
         require(_tokenDecimals > 0, "invalid token decimals");
         require(_seeder != address(0), "invalid seeder address");
@@ -52,8 +56,9 @@ contract Keeper is
         seeder = Seeder(_seeder);
         threshold = _threshold;
         tokenAddress = _tokenAddress;
-        tokenDecimals = _tokenDecimals;
+        priceDecimals = _priceDecimals;
         interval = _interval;
+        tokenDecimals = _tokenDecimals;
     }
 
     function setThreshold(uint16 _threshold)
@@ -78,6 +83,8 @@ contract Keeper is
     }
 
     function isThresholdExceeded(uint256 newPrice) public view returns (bool) {
+        if (threshold == 0) return true;
+
         uint256 thresholdValue = lastPrice.mul(threshold).div(divisor);
         return
             newPrice > lastPrice.add(thresholdValue) ||
@@ -116,7 +123,9 @@ contract Keeper is
 
         lastPrice = newPrice;
         uint256 seedPerToken = newPrice.mul(seedPerUsd).div(divisor);
-        uint256 seedPrice = uint256(10**(tokenDecimals * 2)).div(seedPerToken);
+        uint256 seedPrice = uint256(10**(priceDecimals + tokenDecimals)).div(
+            seedPerToken
+        );
 
         seeder.setFeePerSeed(tokenAddress, seedPrice);
     }

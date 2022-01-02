@@ -17,7 +17,8 @@ describe("Keeper", function () {
     threshold: BigNumber;
 
   const tokenAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
-  const tokenDecimals = 8;
+  const tokenDecimals = 18;
+  const priceDecimals = 8;
   const interval = BigNumber.from(300); // 5 minutes
   const provider = ethers.provider;
   const adminRole =
@@ -25,7 +26,7 @@ describe("Keeper", function () {
 
   before(async () => {
     tokenMarketPrice = BigNumber.from(500).mul(
-      BigNumber.from(10).pow(tokenDecimals)
+      BigNumber.from(10).pow(priceDecimals)
     );
     threshold = BigNumber.from(100); // 0.01
 
@@ -42,13 +43,17 @@ describe("Keeper", function () {
   beforeEach(async () => {
     const Keeper = await ethers.getContractFactory("KeeperMock");
     keeper = await Keeper.deploy(
+      seeder.address,
       priceAggregator.address,
+      priceDecimals,
       tokenAddress,
       tokenDecimals,
-      seeder.address,
       threshold,
       interval
     );
+
+    // set role for keeper to be able to call seeder
+    seeder.setTokenFeeSetterRole(tokenAddress, keeper.address);
   });
 
   describe("#setThreshold", () => {
@@ -148,6 +153,15 @@ describe("Keeper", function () {
         )
       ).to.be.true;
     });
+
+    it.only("should return true is threshold is disable", async () => {
+      await keeper.setThreshold(0);
+
+      const lastPrice = await keeper.lastPrice();
+
+      // eslint-disable-next-line no-unused-expressions
+      expect(await keeper.isThresholdExceeded(lastPrice)).to.be.true;
+    });
   });
 
   describe("#checkUpkeep", () => {
@@ -232,7 +246,7 @@ describe("Keeper", function () {
 
       const truncatedSeedAmount = seedAmount.div(BigNumber.from(10).pow(18));
       const truncatedTokenPrice = tokenMarketPrice.div(
-        BigNumber.from(10).pow(tokenDecimals)
+        BigNumber.from(10).pow(priceDecimals)
       );
 
       const seedPerUsd = await keeper.seedPerUsd();
@@ -240,6 +254,36 @@ describe("Keeper", function () {
       const seedPerToken = truncatedTokenPrice.mul(seedPerUsd).div(divisor);
 
       expect(truncatedSeedAmount).to.be.eq(seedPerToken);
+    });
+  });
+
+  describe("Tests with hardcoded value", () => {
+    it("should perform upkeep", async () => {
+      const priceDecimals = [8, 12, 18];
+      const tokenDecimals = [18, 8, 12];
+      const tokensMarketPrice = priceDecimals.map((dec) =>
+        BigNumber.from(1000).mul(BigNumber.from(10).pow(dec))
+      );
+      const tokensAmount = tokenDecimals.map((dec) =>
+        BigNumber.from(10).pow(dec)
+      ); // 1 Token
+
+      for (let i = 0; i < tokensMarketPrice.length; i++) {
+        await keeper.updateTokenDecimals(tokenDecimals[i]);
+        await keeper.updatePriceDecimals(priceDecimals[i]);
+
+        const performData = new ethers.utils.AbiCoder().encode(
+          ["uint256"],
+          [tokensMarketPrice[i]]
+        );
+        await keeper.performUpkeep(performData);
+        const seedAmount = await seeder.getSeedAmount(
+          tokenAddress,
+          tokensAmount[i]
+        );
+        const truncatedSeedAmount = seedAmount.div(BigNumber.from(10).pow(18));
+        expect(truncatedSeedAmount).to.be.eq(BigNumber.from(700));
+      }
     });
   });
 });

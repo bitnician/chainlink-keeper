@@ -5,18 +5,20 @@ import "../Keeper.sol";
 
 contract KeeperMock is Keeper {
     constructor(
-        address _priceAggregator,
-        address _tokenAddress,
-        uint8 _tokenDecimals,
         address _seeder,
+        address _priceAggregator,
+        uint8 _priceDecimals,
+        address _tokenAddress, // 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+        uint8 _tokenDecimals,
         uint16 _threshold,
         uint16 _interval
     )
         Keeper(
-            _priceAggregator,
-            _tokenAddress,
-            _tokenDecimals,
             _seeder,
+            _priceAggregator,
+            _priceDecimals,
+            _tokenAddress, // 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+            _tokenDecimals,
             _threshold,
             _interval
         )
@@ -45,5 +47,13 @@ contract KeeperMock is Keeper {
             isThresholdExceeded(newPrice);
 
         performData = abi.encode(newPrice);
+    }
+
+    function updateTokenDecimals(uint8 _tokenDecimals) external {
+        tokenDecimals = _tokenDecimals;
+    }
+
+    function updatePriceDecimals(uint8 _priceDecimals) external {
+        priceDecimals = _priceDecimals;
     }
 }
