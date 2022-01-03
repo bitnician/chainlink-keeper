@@ -154,7 +154,7 @@ describe("Keeper", function () {
       ).to.be.true;
     });
 
-    it.only("should return true is threshold is disable", async () => {
+    it("should return true is threshold is disable", async () => {
       await keeper.setThreshold(0);
 
       const lastPrice = await keeper.lastPrice();

@@ -7,13 +7,22 @@ import { addresses } from "./data";
 async function main() {
   const signer = await getSigner(hre);
   const { priceAggregator, seeder } = addresses;
-  const threshold = 100;
+
+  const tokenAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+  const tokenDecimals = 18;
+  const priceDecimals = 8;
+  const threshold = 0;
+  const interval = "300"; // 5 minutes
 
   const Keeper = await hre.ethers.getContractFactory("Keeper");
   const keeper = await Keeper.connect(signer).deploy(
-    priceAggregator,
     seeder,
-    threshold
+    priceAggregator,
+    priceDecimals,
+    tokenAddress,
+    tokenDecimals,
+    threshold,
+    interval
   );
 
   console.log("keeper deployed to:", keeper.address);
@@ -21,9 +30,13 @@ async function main() {
     "npx hardhat verify --network",
     hre.network.name,
     keeper.address,
-    priceAggregator,
     seeder,
-    threshold
+    priceAggregator,
+    priceDecimals,
+    tokenAddress,
+    tokenDecimals,
+    threshold,
+    interval
   );
 }
 

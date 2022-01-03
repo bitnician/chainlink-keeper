@@ -2,25 +2,24 @@
 import hre from "hardhat";
 import "@nomiclabs/hardhat-ethers";
 import { getSigner } from "./getSigner";
-import { addresses } from "./data";
+import { chainLinkPriceFeed } from "./data";
 
 async function main() {
   const signer = await getSigner(hre);
-  const { chainLinkPriceFeed } = addresses;
+  const { kovan } = chainLinkPriceFeed;
+  const { address } = kovan;
 
   const PriceAggregator = await hre.ethers.getContractFactory(
     "PriceAggregator"
   );
-  const priceAggregator = await PriceAggregator.connect(signer).deploy(
-    chainLinkPriceFeed
-  );
+  const priceAggregator = await PriceAggregator.connect(signer).deploy(address);
 
   console.log("PriceAggregator deployed to:", priceAggregator.address);
   console.log(
     "npx hardhat verify --network",
     hre.network.name,
     priceAggregator.address,
-    chainLinkPriceFeed
+    address
   );
 }
 

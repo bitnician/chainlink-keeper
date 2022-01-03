@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./chainlink/KeeperCompatible.sol";
 import "./PriceAggregator.sol";
-import "./Seeder.sol";
+import "./ISeeder.sol";
 
 // solhint-disable not-rely-on-time
 contract Keeper is
@@ -20,7 +20,7 @@ contract Keeper is
     PriceAggregator public priceAggregator;
     uint8 public priceDecimals; // decimlas corresponding to the priceAggregator, check https://docs.chain.link/docs/binance-smart-chain-addresses/ to see priceAggregator addresses and their decimals
 
-    Seeder public seeder;
+    ISeeder public seeder;
 
     uint16 public immutable divisor = 10000;
     uint16 public threshold; // set it 0 to disable the threshold
@@ -53,7 +53,7 @@ contract Keeper is
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 
         priceAggregator = PriceAggregator(_priceAggregator);
-        seeder = Seeder(_seeder);
+        seeder = ISeeder(_seeder);
         threshold = _threshold;
         tokenAddress = _tokenAddress;
         priceDecimals = _priceDecimals;
@@ -97,9 +97,7 @@ contract Keeper is
         return uint256(newPrice);
     }
 
-    function checkUpkeep(
-        bytes calldata /* checkData */
-    )
+    function checkUpkeep(bytes calldata checkData)
         external
         view
         virtual
